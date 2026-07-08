@@ -1,0 +1,43 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+dist-electron
+release
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Local docs and brainstorming
+docs/
+.superpowers/
+*.md
+!README.md
+
+# Agent context (no versionar)
+AGENTS.md
+CLAUDE.md
+.claude/
+.codex/
+*.tsbuildinfo
+
+# Artefactos de tsc emitidos por accidente junto a los fuentes:
+# Vite resuelve .js ANTES que .ts y serviria el compilado rancio.
+src/**/*.js

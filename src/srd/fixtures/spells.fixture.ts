@@ -1,0 +1,20 @@
+// Objeto real de Open5e v2 (recurso spells, srd-2024), recortado a los campos que usa el adaptador.
+export const acidArrowRaw = {
+    key: 'srd-2024_acid-arrow',
+    name: 'Acid Arrow',
+    desc: 'A shimmering green arrow streaks toward a target within range and bursts in a spray of acid.',
+    level: 2,
+    school: { name: 'Evocation', key: 'evocation' },
+    classes: [{ name: 'Wizard', key: 'srd-2024_wizard' }],
+    casting_time: 'action',
+    range: 90,
+    range_unit: 'feet',
+    range_text: '90 feet',
+    verbal: true,
+    somatic: true,
+    material: true,
+    material_specified: 'powdered rhubarb leaf',
+    duration: 'instantaneous',
+    concentration: false,
+    ritual: false,
+}

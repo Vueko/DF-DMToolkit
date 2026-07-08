@@ -1,0 +1,343 @@
+@import '@fontsource/alegreya-sans/latin-400.css';
+@import '@fontsource/alegreya-sans/latin-500.css';
+@import '@fontsource/alegreya-sans/latin-700.css';
+@import '@fontsource/alegreya/latin-400.css';
+@import '@fontsource/alegreya/latin-400-italic.css';
+@import '@fontsource/alegreya/latin-700.css';
+@import '@fontsource/marcellus/latin-400.css';
+@import "tailwindcss";
+
+/* Identidad D&D: tema claro "Parchment" (defecto, valores de @theme) y oscuro
+   "Dungeon" (override [data-theme]). danger-* = familia roja, arcane-* = azul. */
+@theme {
+  /* Acento arcane (azules) */
+  --color-arcane-primary: #16324F;
+  --color-arcane-secondary: #2E5A8F;
+  --color-arcane-light: #4C7FB8;
+
+  /* Acento danger (rojos/oros) */
+  --color-danger-primary: #A41E22;
+  --color-danger-secondary: #7A1A14;
+  --color-danger-yellow: #A0821F;
+  --color-danger-gold: #8A6D1E;
+
+  /*Colores para las cards (statblock parchment) */
+  --color-card-bg: #F5EDD8;
+  --color-card-border: #B8860B;
+  --color-card-text: #1A1A1A;
+
+  /*Colores de la interfaz — Parchment */
+  --color-ui-bg: #F6EFDC;
+  --color-ui-canvas: #EFE5CC;
+  --color-ui-surface: #FFFFFF;
+  --color-ui-surface2: #E6DAC0;
+  --color-ui-text: #221A10;
+  --color-ui-muted: #6E6250;
+
+  /*Acento primario (re-mapeable por tema) */
+  --color-accent: #A41E22;
+  --color-accent-fg: #FFFFFF;
+
+  /*Fuentes */
+  --font-sans: 'Alegreya Sans', system-ui, sans-serif;
+  --font-display: 'Marcellus', serif;
+  --font-serif: 'Alegreya', Georgia, serif;
+
+}
+
+body {
+  background-color: var(--color-ui-bg);
+  color: var(--color-ui-text);
+  font-family: 'Alegreya Sans', system-ui, sans-serif;
+  margin: 0;
+  height: 100%;
+}
+
+/* --- Tema oscuro "Dungeon" --- */
+[data-theme="dungeon"] {
+  --color-ui-bg: #1C1814;
+  --color-ui-canvas: #141009;
+  --color-ui-surface: #2A241D;
+  --color-ui-surface2: #3A3229;
+  --color-ui-text: #EDE4D3;
+  --color-ui-muted: #A89880;
+  --color-danger-primary: #D45348;
+  --color-danger-secondary: #A63A30;
+  --color-danger-gold: #E0B341;
+  --color-danger-yellow: #EAC65C;
+  --color-arcane-primary: #24405E;
+  --color-arcane-secondary: #3E6D9E;
+  --color-arcane-light: #7FA8D9;
+  --color-accent: #C33C31;
+}
+
+/* --- Scrollbar temático (global, acorde al tema oscuro de la app) --- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-ui-surface2) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-ui-surface2);
+  background-clip: content-box;
+  border: 2px solid transparent;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-ui-muted);
+  background-clip: content-box;
+  border: 2px solid transparent;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+#root {
+  height: 100%;
+}
+
+/* --- Transiciones de ruta (solo CSS) --- */
+@keyframes page-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.page-fade {
+  animation: page-fade-in 180ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-fade { animation: none; }
+}
+
+@keyframes modal-pop-in {
+  from { opacity: 0; transform: scale(0.98); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.modal-enter {
+  animation: modal-pop-in 150ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-enter { animation: none; }
+}
+
+/* Markdown Typography — serif de manual */
+.prose {
+  @apply text-sm leading-relaxed font-serif;
+}
+
+/* Color de texto contextual para el Markdown */
+:where(.ui-bg, .ui-surface, .ui-canvas, .bg-ui-bg, .bg-ui-surface) .prose {
+  @apply text-ui-text;
+}
+
+.bg-card-bg .prose {
+  @apply text-card-text;
+}
+
+.prose p {
+  @apply mb-4 last:mb-0;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  @apply font-display font-bold mt-8 mb-4 text-ui-text;
+}
+
+.prose h1 {
+  @apply text-3xl text-danger-primary border-b border-ui-surface2 pb-2 tracking-wide;
+}
+
+.prose h2 {
+  @apply text-2xl text-danger-secondary tracking-wide;
+}
+
+.prose h3 {
+  @apply text-xl text-danger-primary;
+}
+
+.prose h4 {
+  @apply text-lg opacity-90;
+}
+
+.prose ul {
+  @apply list-disc list-outside ml-6 mb-5 space-y-1 opacity-90;
+}
+
+.prose ol {
+  @apply list-decimal list-outside ml-6 mb-5 space-y-1 opacity-90;
+}
+
+.prose li {
+  @apply pl-1;
+}
+
+.prose strong {
+  @apply font-semibold text-danger-secondary;
+}
+
+.prose em {
+  @apply italic text-ui-text opacity-90;
+}
+
+.prose blockquote {
+  @apply border-l-4 border-danger-primary pl-5 py-2 my-6 italic text-ui-muted bg-ui-surface2/30 rounded-r-lg;
+}
+
+.prose blockquote p {
+  @apply mb-0;
+}
+
+.prose hr {
+  @apply border-t border-ui-surface2 my-8;
+}
+
+/* Inline code */
+.prose :not(pre) > code {
+  @apply bg-ui-canvas text-danger-secondary px-1.5 py-0.5 rounded text-[0.85em] font-mono border border-ui-surface2;
+}
+
+/* Code blocks */
+.prose pre {
+  @apply bg-ui-canvas border border-ui-surface2 rounded-lg p-4 my-5 overflow-x-auto text-[0.85em] font-mono;
+}
+
+.prose pre code {
+  @apply bg-transparent border-0 p-0 text-ui-text;
+}
+
+/* Tables */
+.prose table {
+  @apply w-full my-5 text-sm border border-ui-surface2 rounded-lg overflow-hidden border-collapse;
+}
+
+.prose th {
+  @apply bg-ui-surface2 text-ui-text font-semibold text-left px-3 py-2 border-b border-ui-surface2;
+}
+
+.prose td {
+  @apply px-3 py-2 border-b border-ui-surface2/60;
+}
+
+.prose tr:last-child td {
+  @apply border-b-0;
+}
+
+/* Tablas dentro de una card de pergamino (statblock / ficha del glosario) */
+.bg-card-bg .prose table {
+  @apply border-card-border/50;
+}
+
+.bg-card-bg .prose th {
+  @apply bg-card-border/15 text-card-text border-card-border/40;
+}
+
+.bg-card-bg .prose td {
+  @apply text-card-text border-card-border/25;
+}
+
+/* Links rendered outside the vault component fallback */
+.prose a {
+  @apply text-arcane-secondary;
+}
+
+/* --- Callouts --- */
+.callout {
+  @apply my-4 rounded-lg border-l-4 overflow-hidden bg-ui-surface2/20;
+}
+
+.callout-header {
+  @apply flex items-center gap-2 px-3.5 py-2 font-semibold text-sm not-italic;
+}
+
+.callout-icon {
+  @apply text-base leading-none;
+}
+
+.callout-body {
+  @apply px-3.5 pb-2.5 pt-0 text-sm text-ui-text;
+}
+
+.prose .callout-body p {
+  @apply mb-2 last:mb-0;
+}
+
+.prose .callout-body > :first-child {
+  @apply mt-0;
+}
+
+/* Per-type accent: left border + header color/icon tint.
+   Headers: tonos -700 para el tema claro (defecto); -300 bajo [data-theme="dungeon"]. */
+.callout-note, .callout-info, .callout-todo { @apply border-sky-500/70; }
+.callout-note .callout-header, .callout-info .callout-header, .callout-todo .callout-header { @apply text-sky-700; }
+[data-theme="dungeon"] .callout-note .callout-header, [data-theme="dungeon"] .callout-info .callout-header, [data-theme="dungeon"] .callout-todo .callout-header { @apply text-sky-300; }
+
+.callout-tip, .callout-hint, .callout-important,
+.callout-abstract, .callout-summary, .callout-tldr { @apply border-teal-500/70; }
+.callout-tip .callout-header, .callout-hint .callout-header, .callout-important .callout-header,
+.callout-abstract .callout-header, .callout-summary .callout-header, .callout-tldr .callout-header { @apply text-teal-700; }
+[data-theme="dungeon"] .callout-tip .callout-header, [data-theme="dungeon"] .callout-hint .callout-header, [data-theme="dungeon"] .callout-important .callout-header,
+[data-theme="dungeon"] .callout-abstract .callout-header, [data-theme="dungeon"] .callout-summary .callout-header, [data-theme="dungeon"] .callout-tldr .callout-header { @apply text-teal-300; }
+
+.callout-success, .callout-check, .callout-done { @apply border-emerald-500/70; }
+.callout-success .callout-header, .callout-check .callout-header, .callout-done .callout-header { @apply text-emerald-700; }
+[data-theme="dungeon"] .callout-success .callout-header, [data-theme="dungeon"] .callout-check .callout-header, [data-theme="dungeon"] .callout-done .callout-header { @apply text-emerald-300; }
+
+.callout-question, .callout-help, .callout-faq { @apply border-amber-400/70; }
+.callout-question .callout-header, .callout-help .callout-header, .callout-faq .callout-header { @apply text-amber-700; }
+[data-theme="dungeon"] .callout-question .callout-header, [data-theme="dungeon"] .callout-help .callout-header, [data-theme="dungeon"] .callout-faq .callout-header { @apply text-amber-200; }
+
+.callout-warning, .callout-caution, .callout-attention { @apply border-orange-500/70; }
+.callout-warning .callout-header, .callout-caution .callout-header, .callout-attention .callout-header { @apply text-orange-700; }
+[data-theme="dungeon"] .callout-warning .callout-header, [data-theme="dungeon"] .callout-caution .callout-header, [data-theme="dungeon"] .callout-attention .callout-header { @apply text-orange-300; }
+
+.callout-failure, .callout-fail, .callout-missing, .callout-bug { @apply border-red-500/70; }
+.callout-failure .callout-header, .callout-fail .callout-header, .callout-missing .callout-header, .callout-bug .callout-header { @apply text-red-700; }
+[data-theme="dungeon"] .callout-failure .callout-header, [data-theme="dungeon"] .callout-fail .callout-header, [data-theme="dungeon"] .callout-missing .callout-header, [data-theme="dungeon"] .callout-bug .callout-header { @apply text-red-300; }
+
+.callout-danger, .callout-error { @apply border-red-600/80; }
+.callout-danger .callout-header, .callout-error .callout-header { @apply text-red-700; }
+[data-theme="dungeon"] .callout-danger .callout-header, [data-theme="dungeon"] .callout-error .callout-header { @apply text-red-400; }
+
+.callout-example { @apply border-violet-500/70; }
+.callout-example .callout-header { @apply text-violet-700; }
+[data-theme="dungeon"] .callout-example .callout-header { @apply text-violet-300; }
+
+.callout-quote, .callout-cite { @apply border-slate-400/60; }
+.callout-quote .callout-header, .callout-cite .callout-header { @apply text-slate-600; }
+[data-theme="dungeon"] .callout-quote .callout-header, [data-theme="dungeon"] .callout-cite .callout-header { @apply text-slate-300; }
+
+.prose-secret h1 {
+  @apply text-arcane-light border-arcane-light/30;
+}
+
+.prose-secret h2 {
+  @apply text-arcane-light;
+}
+
+.prose-secret h3 {
+  @apply text-arcane-secondary;
+}
+
+.prose-secret strong {
+  @apply text-arcane-light;
+}
+
+.prose-secret blockquote {
+  @apply border-arcane-light bg-arcane-light/10 text-arcane-light/80;
+}

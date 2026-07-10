@@ -1,8 +1,8 @@
 {
   "name": "dnd5e-toolkit",
   "private": true,
-  "version": "0.1.0",
-  "description": "Desktop D&D 5e DM toolkit for encounter prep, initiative, SRD lookup, notes, maps, music, and player display.",
+  "version": "0.1.1",
+  "description": "Desktop D&D 5e DM toolkit for encounter prep, initiative, SRD lookup, notes, maps, music, soundboard, and player display.",
   "author": "Carlos B. Gómez García",
   "license": "MIT",
   "main": "dist-electron/main.js",

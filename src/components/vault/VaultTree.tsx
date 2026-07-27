@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { VaultNode } from '../../types'
+import { ImageIcon, FileTextIcon } from '../icons'
 
 interface VaultTreeProps {
     node: VaultNode
@@ -40,8 +41,16 @@ function NoteIcon() {
     )
 }
 
-function NoteRow({ node, isActive, onSelect }: { node: VaultNode; isActive: boolean; onSelect: (p: string) => void }) {
-    const label = node.name.replace(/\.md$/i, '')
+// Notas (.md) y documentos hoja (imagen / pdf / docx) se muestran como archivos con
+// su icono de tipo. Solo las notas ocultan la extensión; el resto la conservan para
+// distinguir un .pdf de un .docx de un vistazo.
+function FileRow({ node, isActive, onSelect }: { node: VaultNode; isActive: boolean; onSelect: (p: string) => void }) {
+    const label = node.type === 'note' ? node.name.replace(/\.md$/i, '') : node.name
+    const icon = node.type === 'image'
+        ? <ImageIcon className="w-3.5 h-3.5" />
+        : node.type === 'note'
+            ? <NoteIcon />
+            : <FileTextIcon className="w-3.5 h-3.5" /> // pdf, doc
     return (
         <button
             type="button"
@@ -52,7 +61,7 @@ function NoteRow({ node, isActive, onSelect }: { node: VaultNode; isActive: bool
             }`}
         >
             {isActive && <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-danger-gold" />}
-            <span className={isActive ? 'text-danger-gold' : 'text-ui-muted/60 group-hover:text-ui-muted'}><NoteIcon /></span>
+            <span className={isActive ? 'text-danger-gold' : 'text-ui-muted/60 group-hover:text-ui-muted'}>{icon}</span>
             <span className="truncate">{label}</span>
         </button>
     )
@@ -85,10 +94,8 @@ function FolderNode({ node, activePath, onSelect, defaultOpen }: VaultTreeProps)
 }
 
 export function VaultTree({ node, activePath, onSelect, defaultOpen }: VaultTreeProps) {
-    if (node.type === 'image') return null
-
-    if (node.type === 'note') {
-        return <NoteRow node={node} isActive={activePath === node.path} onSelect={onSelect} />
+    if (node.type === 'note' || node.type === 'image' || node.type === 'pdf' || node.type === 'doc') {
+        return <FileRow node={node} isActive={activePath === node.path} onSelect={onSelect} />
     }
 
     // Root folder: render children flush (no header). Top-level folders start collapsed.

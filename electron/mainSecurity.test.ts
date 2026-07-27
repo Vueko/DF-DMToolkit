@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isAllowedStoreKey, isAllowedVaultImageExtension } from './mainSecurity'
+import { isAllowedStoreKey, isAllowedVaultImageExtension, isAllowedVaultBinaryExtension, VAULT_BINARY_EXT } from './mainSecurity'
 
 describe('main process security helpers', () => {
     it('allows only known persisted store keys', () => {
@@ -20,5 +20,17 @@ describe('main process security helpers', () => {
 
         expect(isAllowedVaultImageExtension('.svg')).toBe(false)
         expect(isAllowedVaultImageExtension('.html')).toBe(false)
+    })
+
+    it('allows images, pdf and docx as viewable binaries (case-insensitive), nothing else', () => {
+        for (const ext of ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.pdf', '.docx', '.PDF', '.DOCX']) {
+            expect(isAllowedVaultBinaryExtension(ext)).toBe(true)
+        }
+        for (const ext of ['.md', '.exe', '.doc', '.txt', '.svg', '', '.js', 42, null, undefined]) {
+            expect(isAllowedVaultBinaryExtension(ext as unknown)).toBe(false)
+        }
+        expect(VAULT_BINARY_EXT.has('.pdf')).toBe(true)
+        expect(VAULT_BINARY_EXT.has('.png')).toBe(true)
+        expect(VAULT_BINARY_EXT.has('.svg')).toBe(false)
     })
 })

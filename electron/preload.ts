@@ -85,6 +85,7 @@ contextBridge.exposeInMainWorld('electron', {
         readTree: (root: string): Promise<unknown> => ipcRenderer.invoke('vault:read-tree', root),
         readFile: (rel: string): Promise<string | null> => ipcRenderer.invoke('vault:read-file', rel),
         readImage: (rel: string): Promise<Uint8Array | null> => ipcRenderer.invoke('vault:read-image', rel),
+        readBinary: (rel: string): Promise<Uint8Array | null> => ipcRenderer.invoke('vault:read-binary', rel),
         search: (query: string): Promise<unknown> => ipcRenderer.invoke('vault:search', query),
     },
 

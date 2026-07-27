@@ -3,6 +3,10 @@ import { useSearchParams } from 'react-router-dom'
 import { useVaultStore } from '../vault/vaultStore'
 import { VaultTree } from '../components/vault/VaultTree'
 import { VaultMarkdown } from '../components/vault/VaultMarkdown'
+import { viewerForPath } from '../components/vault/viewerForPath'
+import ImageViewer from '../components/vault/ImageViewer'
+import PdfViewer from '../components/vault/PdfViewer'
+import DocxViewer from '../components/vault/DocxViewer'
 import { slugifyHeading } from '../vault/slug'
 import { extractFrontmatter } from '../vault/noteMarkdown'
 import type { VaultSearchResult } from '../types'
@@ -95,8 +99,10 @@ function WorldWiki() {
     // Cargar el cuerpo de la nota activa
     useEffect(() => {
         // activePath is only null before the first note opens (cursor never returns to -1
-        // afterwards), so the initial empty body/frontmatter state already covers this case.
-        if (!activePath) return
+        // afterwards). Non-markdown files (pdf/image/doc) render via their own viewer and must
+        // not be read as text — the Props button and body render are gated to markdown, so any
+        // leftover markdown state stays hidden behind the active viewer.
+        if (!activePath || viewerForPath(activePath) !== 'markdown') return
         let cancelled = false
         window.electron.vault.readFile(activePath).then((raw) => {
             if (cancelled) return
@@ -254,7 +260,7 @@ function WorldWiki() {
                     <button disabled={!canBack} onClick={() => setCursor((c) => c - 1)} className="px-2 py-1 text-sm rounded disabled:opacity-30 hover:bg-ui-surface2">&#x2190;</button>
                     <button disabled={!canForward} onClick={() => setCursor((c) => c + 1)} className="px-2 py-1 text-sm rounded disabled:opacity-30 hover:bg-ui-surface2">&#x2192;</button>
                     <span className="text-xs text-ui-muted truncate">{activePath ?? t('wiki.selectNote')}</span>
-                    {frontmatter && (
+                    {activePath && viewerForPath(activePath) === 'markdown' && frontmatter && (
                         <button onClick={() => setShowFrontmatter((v) => !v)} className="ml-auto text-[10px] text-ui-muted hover:text-ui-text uppercase tracking-wider">
                             {showFrontmatter ? t('wiki.hideProps') : t('wiki.props')}
                         </button>
@@ -264,9 +270,14 @@ function WorldWiki() {
                     {showFrontmatter && frontmatter && (
                         <pre className="text-xs bg-ui-bg border border-ui-surface2 rounded-lg p-3 mb-4 overflow-x-auto">{JSON.stringify(frontmatter, null, 2)}</pre>
                     )}
-                    {activePath ? (
-                        <VaultMarkdown body={body} onNavigate={openNote} />
-                    ) : (
+                    {activePath ? (() => {
+                        switch (viewerForPath(activePath)) {
+                            case 'image': return <ImageViewer key={activePath} path={activePath} />
+                            case 'pdf': return <PdfViewer key={activePath} path={activePath} />
+                            case 'doc': return <DocxViewer key={activePath} path={activePath} />
+                            default: return <VaultMarkdown body={body} onNavigate={openNote} />
+                        }
+                    })() : (
                         <p className="text-ui-muted text-sm italic">{t('wiki.selectNoteFromVault')}</p>
                     )}
                 </div>

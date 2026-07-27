@@ -1,7 +1,7 @@
 export interface VaultNode {
     name: string                 // nombre con extensión (carpeta o archivo)
     path: string                 // ruta POSIX relativa al root del vault ('' = root)
-    type: 'folder' | 'note' | 'image'
+    type: 'folder' | 'note' | 'image' | 'pdf' | 'doc'
     children?: VaultNode[]        // presente solo en carpetas
 }
 

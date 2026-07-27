@@ -63,6 +63,7 @@ declare global {
                 readTree: (root: string) => Promise<import('./types').VaultNode | null>
                 readFile: (rel: string) => Promise<string | null>
                 readImage: (rel: string) => Promise<Uint8Array | null>
+                readBinary: (rel: string) => Promise<Uint8Array | null>
                 search: (query: string) => Promise<import('./types').VaultSearchResult[]>
             }
             srd: {

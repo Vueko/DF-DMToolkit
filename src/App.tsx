@@ -63,8 +63,10 @@ function Layout() {
 
   useEffect(() => {
     const off = window.electron.updater.onEvent((ev) => useUpdateStore.getState().apply(ev))
-    window.electron.updater.check()
-    return off
+    // Diferimos el chequeo de actualización (red) para no competir con el arranque;
+    // la ventana pinta primero y la comprobación ocurre en cuanto el hilo está libre.
+    const id = setTimeout(() => window.electron.updater.check(), 4000)
+    return () => { clearTimeout(id); off() }
   }, [])
 
   const location = useLocation()

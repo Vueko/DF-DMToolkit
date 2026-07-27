@@ -11,3 +11,11 @@ createRoot(document.getElementById('root')!).render(
     </HashRouter>
   </StrictMode>,
 )
+
+// Medición de arranque (solo dev): tiempo hasta el primer frame pintado, para
+// localizar el coste real del startup sin adivinar. No se incluye en producción.
+if (import.meta.env.DEV) {
+  requestAnimationFrame(() =>
+    console.info(`[startup] first paint @ ${Math.round(performance.now())}ms`),
+  )
+}

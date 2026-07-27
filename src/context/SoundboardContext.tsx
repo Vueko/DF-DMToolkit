@@ -1,4 +1,4 @@
-import { createContext, useContext, useRef } from 'react'
+import { createContext, useContext, useMemo, useRef } from 'react'
 import { useSoundboardStore } from '../store/soundboardStore'
 import type { Sound } from '../types'
 
@@ -20,7 +20,9 @@ export function SoundboardProvider({ children }: { children: React.ReactNode }) 
     const ambientRefs = useRef<Map<string, HTMLAudioElement>>(new Map())
     const blobUrlRefs = useRef<Map<string, string>>(new Map())
     const pendingAmbientIds = useRef<Set<string>>(new Set())
-    const { setActiveAmbientIds } = useSoundboardStore()
+    // Selector de la acción (referencia estable): así el Provider NO se re-renderiza
+    // cuando cambia activeAmbientIds; las funciones leen el estado vivo con getState().
+    const setActiveAmbientIds = useSoundboardStore((s) => s.setActiveAmbientIds)
 
     const playOneshot = async (sound: Sound): Promise<void> => {
         const data = await resolveSoundData(sound)
@@ -89,8 +91,17 @@ export function SoundboardProvider({ children }: { children: React.ReactNode }) 
         setActiveAmbientIds([])
     }
 
+    // Valor estable: las funciones solo cierran sobre refs y la acción estable del store
+    // (leen estado vivo con getState()), así que memoizarlo evita re-renderizar a todos
+    // los consumidores de useSoundboard en cada cambio del árbol.
+    const value = useMemo<SoundboardContextValue>(
+        () => ({ toggleAmbient, stopAmbient, stopAllAmbients, playOneshot }),
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    )
+
     return (
-        <SoundboardContext.Provider value={{ toggleAmbient, stopAmbient, stopAllAmbients, playOneshot }}>
+        <SoundboardContext.Provider value={value}>
             {children}
         </SoundboardContext.Provider>
     )

@@ -4,7 +4,7 @@ import * as path from 'path'
 import * as fs from 'fs'
 import { autoUpdater } from 'electron-updater'
 import { registerSrdIpc } from './srd'
-import { isAllowedStoreKey, isAllowedVaultImageExtension, VAULT_IMAGE_EXT } from './mainSecurity'
+import { isAllowedStoreKey, isAllowedVaultImageExtension, isAllowedVaultBinaryExtension, VAULT_IMAGE_EXT } from './mainSecurity'
 import { resolveBuiltinPath } from './builtinAudio'
 
 // Allows UUIDs and simple slug IDs (e.g. "shared-map"), blocks path traversal
@@ -95,7 +95,7 @@ function isInsideRoot(root: string, target: string): boolean {
 interface VaultNodeShape {
   name: string
   path: string
-  type: 'folder' | 'note' | 'image'
+  type: 'folder' | 'note' | 'image' | 'pdf' | 'doc'
   children?: VaultNodeShape[]
 }
 
@@ -112,6 +112,8 @@ function buildVaultTree(absDir: string, root: string): VaultNodeShape {
       const ext = path.extname(e.name).toLowerCase()
       if (ext === '.md') children.push({ name: e.name, path: toPosix(path.relative(root, abs)), type: 'note' })
       else if (VAULT_IMAGE_EXT.has(ext)) children.push({ name: e.name, path: toPosix(path.relative(root, abs)), type: 'image' })
+      else if (ext === '.pdf') children.push({ name: e.name, path: toPosix(path.relative(root, abs)), type: 'pdf' })
+      else if (ext === '.docx') children.push({ name: e.name, path: toPosix(path.relative(root, abs)), type: 'doc' })
     }
   }
   children.sort((a, b) => {
@@ -275,7 +277,7 @@ app.whenReady().then(() => {
         responseHeaders: {
           ...details.responseHeaders,
           'Content-Security-Policy': [
-            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self';"
+            "default-src 'self'; script-src 'self'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self';"
           ],
         },
       })
@@ -559,6 +561,15 @@ app.whenReady().then(() => {
     if (!vaultRoot || typeof rel !== 'string') return null
     const abs = path.resolve(vaultRoot, rel)
     if (!isInsideRoot(vaultRoot, abs) || !isAllowedVaultImageExtension(path.extname(abs))) return null
+    return fs.existsSync(abs) ? fs.readFileSync(abs) : null
+  })
+
+  // Lectura binaria genérica para el visor multi-formato (imágenes + PDF + .docx),
+  // con la misma validación de ruta y allowlist de extensión.
+  ipcMain.handle('vault:read-binary', (_, rel: string): Uint8Array | null => {
+    if (!vaultRoot || typeof rel !== 'string') return null
+    const abs = path.resolve(vaultRoot, rel)
+    if (!isInsideRoot(vaultRoot, abs) || !isAllowedVaultBinaryExtension(path.extname(abs))) return null
     return fs.existsSync(abs) ? fs.readFileSync(abs) : null
   })
 

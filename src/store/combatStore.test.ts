@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useCombatStore, combatOf, migrateCombatV1toV2 } from './combatStore'
+import { useDiceStore } from './diceStore'
 import type { Combatant, EnemyInstance } from '../types'
 
 const c = (id: string, init = 0, dex?: number, kind: 'pc' | 'enemy' = 'enemy'): Combatant =>
@@ -8,7 +9,10 @@ const inst = (id: string, over: Partial<EnemyInstance> = {}): EnemyInstance =>
     ({ instanceId: id, monsterId: 'srd:goblin', label: 'G', hpCurrent: 10, hpMax: 10, conditions: [], ...over })
 
 const get = () => useCombatStore.getState()
-beforeEach(() => useCombatStore.setState({ combats: {} }))
+beforeEach(() => {
+    useCombatStore.setState({ combats: {} })
+    useDiceStore.setState({ history: [], trayOpen: false, mode: 'normal' })
+})
 
 describe('setup y orden', () => {
     it('addCombatants dedupe por id', () => {
@@ -34,6 +38,14 @@ describe('setup y orden', () => {
         expect(g1.initiative).toBe(11 + 2)           // dex 14 → +2
         expect(g2.initiative).toBe(g1.initiative)
         expect(w1.initiative).toBe(11 + 0)           // dex 10 → +0
+    })
+    it('rollEnemyInitiative usa initiativeBonus 2024 si existe', () => {
+        get().addCombatants('e1',
+            [{ ...c('d1', 0, 10), initiativeBonus: 10 }],
+            [inst('d1', { monsterId: 'hb:dragon' })],
+        )
+        get().rollEnemyInitiative('e1', () => 0.5)   // d20 = 11
+        expect(combatOf(get(), 'e1').combatants[0].initiative).toBe(11 + 10)   // no 11 + 0 (dex 10)
     })
 })
 
@@ -138,5 +150,22 @@ describe('combatOf y migración', () => {
     it('migrateCombatV1toV2 descarta el combate único viejo', () => {
         expect(migrateCombatV1toV2({ status: 'running', combatants: [{}] })).toEqual({ combats: {} })
         expect(migrateCombatV1toV2(undefined)).toEqual({ combats: {} })
+    })
+})
+
+describe('rollEnemyInitiative → historial de dados', () => {
+    it('loguea una tirada por grupo con label de iniciativa', () => {
+        get().addCombatants('e1',
+            [c('g1', 0, 14), c('g2', 0, 14), c('w1', 0, 12)],
+            [
+                inst('g1', { monsterId: 'm-goblin', label: 'Goblin 1' }),
+                inst('g2', { monsterId: 'm-goblin', label: 'Goblin 2' }),
+                inst('w1', { monsterId: 'm-wolf', label: 'Wolf 1' }),
+            ])
+        get().rollEnemyInitiative('e1', () => 0.5)   // d20 = 11
+        const h = useDiceStore.getState().history
+        expect(h).toHaveLength(2)                     // un roll por monsterId, no por instancia
+        expect(h.map((r) => r.label).sort()).toEqual(['Initiative · Goblin', 'Initiative · Wolf'])
+        expect(h[0].d20?.natural).toBe(11)
     })
 })

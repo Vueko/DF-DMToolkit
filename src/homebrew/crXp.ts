@@ -24,3 +24,8 @@ export function crToNumber(cr: unknown): number {
 export function crToXp(cr: number): number {
     return CR_XP[String(cr)] ?? 0
 }
+
+// Bono de competencia por CR (DMG): +2 hasta CR 4, +1 cada 4 CR después.
+export function crToProficiency(cr: number): number {
+    return Math.max(2, Math.floor((Math.max(cr, 1) - 1) / 4) + 2)
+}

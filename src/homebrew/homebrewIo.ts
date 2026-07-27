@@ -7,6 +7,32 @@ export const NATIVE_APP_ID = 'dnd5e-toolkit'
 
 export type ImportKind = '5etools' | 'native' | 'invalid'
 
+// Los "Export List" de 5etools son un array en la raíz, sin envoltorio { monster: [...] }.
+// Clasifica cada entrada por campos discriminantes y lo adapta al formato homebrew.
+export function normalize5eImport(parsed: unknown): unknown {
+    if (!Array.isArray(parsed)) return parsed
+    const monster: Record<string, unknown>[] = []
+    const spell: Record<string, unknown>[] = []
+    const item: Record<string, unknown>[] = []
+    for (const entry of parsed) {
+        if (!entry || typeof entry !== 'object') continue
+        const o = entry as Record<string, unknown>
+        if ('level' in o && 'school' in o) spell.push(o)
+        else if ('str' in o || 'cr' in o || 'hp' in o) monster.push(o)
+        else if ('rarity' in o) item.push(o)
+    }
+    if (monster.length + spell.length + item.length === 0) return parsed
+    const counts = new Map<string, number>()
+    for (const e of [...monster, ...spell, ...item]) {
+        if (typeof e.source === 'string' && e.source) counts.set(e.source, (counts.get(e.source) ?? 0) + 1)
+    }
+    const top = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0]
+    return {
+        ...(top ? { _meta: { sources: [{ full: top, json: top }] } } : {}),
+        monster, spell, item,
+    }
+}
+
 export function detectImport(parsed: unknown): { kind: ImportKind } {
     if (!parsed || typeof parsed !== 'object') return { kind: 'invalid' }
     const o = parsed as Record<string, unknown>

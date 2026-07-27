@@ -1,5 +1,5 @@
 import { useEffect, lazy, Suspense } from 'react'
-import { Routes, Route, Outlet, useLocation } from 'react-router-dom'
+import { Routes, Route, Outlet, useLocation, Navigate } from 'react-router-dom'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { PageLoader } from './components/ui'
 import { useSettingsStore } from './store/settingsStore'
@@ -23,11 +23,10 @@ const Bestiary = lazy(() => import('./pages/Bestiary'))
 const EncounterBuilder = lazy(() => import('./pages/EncounterBuilder'))
 const Party = lazy(() => import('./pages/Party'))
 const Glossary = lazy(() => import('./pages/Glossary'))
-const MusicPlayer = lazy(() => import('./pages/MusicPlayer'))
+const AudioHub = lazy(() => import('./pages/AudioHub'))
 const WorldWiki = lazy(() => import('./pages/WorldWiki'))
 const CampaignMap = lazy(() => import('./pages/CampaignMap'))
 const Campaigns = lazy(() => import('./pages/Campaigns'))
-const Soundboard = lazy(() => import('./pages/Soundboard'))
 const Settings = lazy(() => import('./pages/Settings'))
 const PlayerScreen = lazy(() => import('./pages/PlayerScreen'))
 
@@ -106,10 +105,11 @@ function App() {
             <Route path="/encounters" element={<EncounterBuilder />} />
             <Route path="/party" element={<Party />} />
             <Route path="/rules" element={<Glossary />} />
-            <Route path="/music" element={<MusicPlayer />} />
+            <Route path="/audio" element={<AudioHub />} />
+            <Route path="/music" element={<Navigate to="/audio?tab=music" replace />} />
+            <Route path="/soundboard" element={<Navigate to="/audio?tab=sounds" replace />} />
             <Route path="/journal" element={<WorldWiki />} />
             <Route path="/map" element={<CampaignMap />} />
-            <Route path="/soundboard" element={<Soundboard />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
           <Route

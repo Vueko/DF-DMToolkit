@@ -32,6 +32,12 @@ export function migrateSettingsV3toV4(state: unknown): unknown {
     return { ...s, srdVersion: typeof s.srdVersion === 'string' ? s.srdVersion : 'srd-2024' }
 }
 
+// Idioma inicial: el del SO en el primer arranque; el persistido manda después.
+export function detectDefaultLanguage(): Lang {
+    const nav = typeof navigator !== 'undefined' && navigator ? navigator.language ?? '' : ''
+    return nav.toLowerCase().startsWith('es') ? 'es' : 'en'
+}
+
 interface SettingsState {
     uiScale: number
     setUiScale: (scale: number) => void
@@ -60,7 +66,7 @@ export const useSettingsStore = create<SettingsState>()(
             setVaultPath: (vaultPath) => set({ vaultPath }),
             playerWidgetCollapsed: false,
             setPlayerWidgetCollapsed: (playerWidgetCollapsed) => set({ playerWidgetCollapsed }),
-            language: 'en',
+            language: detectDefaultLanguage(),
             setLanguage: (language) => set({ language }),
             pinnedRules: [],
             togglePinnedRule: (key) => set((s) => ({

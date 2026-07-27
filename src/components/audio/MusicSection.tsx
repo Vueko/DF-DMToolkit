@@ -1,11 +1,12 @@
 import { useRef, useState } from 'react'
-import { useCampaignStore } from '../store/campaignStore'
-import { useMusicStore } from '../store/musicStore'
-import { saveTrackFile, deleteTrackFile } from '../utils/musicDb'
-import { generateId } from '../utils/generateId'
-import type { Track } from '../types'
-import { EmptyState } from '../components/ui'
-import { useT } from '../i18n'
+import { useCampaignStore } from '../../store/campaignStore'
+import { useMusicStore } from '../../store/musicStore'
+import { saveTrackFile, deleteTrackFile } from '../../utils/musicDb'
+import { generateId } from '../../utils/generateId'
+import type { Track } from '../../types'
+import { EmptyState } from '../ui'
+import { useT } from '../../i18n'
+import { RequirementNotice } from '../ui/RequirementNotice'
 
 type Mood = 'calm' | 'tense' | 'epic' | 'mystery' | 'ambient'
 
@@ -34,7 +35,7 @@ const MOOD_COLORS: Record<string, string> = {
 
 const MOOD_OPTIONS: Mood[] = ['calm', 'tense', 'epic', 'mystery', 'ambient']
 
-function MusicPlayer() {
+function MusicSection() {
     const t = useT()
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [newPlaylistName, setNewPlaylistName] = useState('')
@@ -57,14 +58,7 @@ function MusicPlayer() {
     const activePlaylist = playlists.find((p) => p.id === activePlaylistId) ?? null
 
     if (!currentCampaignId || !campaign) {
-        return (
-            <div className="flex-1 flex items-center justify-center">
-                <div className="text-center bg-ui-surface p-8 rounded-xl border border-ui-surface2">
-                    <h2 className="text-xl text-ui-text font-display mb-2">{t('music.noCampaignSelected')}</h2>
-                    <p className="text-ui-muted text-sm">{t('music.noCampaignHint')}</p>
-                </div>
-            </div>
-        )
+        return <RequirementNotice title={t('music.noCampaignSelected')} hint={t('music.noCampaignHint')} link="/campaigns" linkLabel={t('nav.campaigns')} />
     }
 
     const handleCreatePlaylist = () => {
@@ -144,11 +138,8 @@ function MusicPlayer() {
 
     return (
         <div className="flex flex-col h-full w-full overflow-hidden">
-            <header className="flex items-center justify-between px-6 py-4 shrink-0 border-b border-ui-surface2">
-                <div>
-                    <h1 className="text-2xl font-display font-bold text-ui-text">{t('music.title')}</h1>
-                    <p className="text-sm text-ui-muted mt-0.5">{campaign.name}</p>
-                </div>
+            <header className="flex items-center justify-between px-6 py-3 shrink-0 border-b border-ui-surface2">
+                <p className="text-sm text-ui-muted">{campaign.name}</p>
                 {activePlaylist && (
                     <div className="flex items-center gap-2 text-xs text-ui-muted bg-ui-surface border border-ui-surface2 px-3 py-1.5 rounded-lg">
                         <span className="text-danger-primary">▶</span>
@@ -352,4 +343,4 @@ function MusicPlayer() {
     )
 }
 
-export default MusicPlayer
+export default MusicSection

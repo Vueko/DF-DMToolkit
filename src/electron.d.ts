@@ -23,6 +23,7 @@ declare global {
                 saveAudio: (id: string, data: ArrayBuffer) => Promise<void>
                 getAudio: (id: string) => Promise<Uint8Array | null>
                 deleteAudio: (id: string) => Promise<void>
+                getBuiltinAudio: (file: string) => Promise<Uint8Array | null>
                 saveMapImage: (id: string, data: ArrayBuffer) => Promise<void>
                 getMapImage: (id: string) => Promise<Uint8Array | null>
                 deleteMapImage: (id: string) => Promise<void>

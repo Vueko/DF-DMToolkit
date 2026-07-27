@@ -13,3 +13,7 @@ vi.stubGlobal('window', {
         },
     },
 })
+
+// El Node moderno expone navigator.language con el locale de la máquina; lo fijamos
+// para que detectDefaultLanguage (idioma inicial) no dependa del host que ejecuta los tests.
+vi.stubGlobal('navigator', { language: 'en-US' })

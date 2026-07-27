@@ -1,6 +1,11 @@
 import type { Monster, MonsterAbility } from '../types'
 import { flattenEntries } from './entries5e'
-import { crToNumber, crToXp } from './crXp'
+import { strip5eTags } from './tags5e'
+import { crToNumber, crToXp, crToProficiency } from './crXp'
+import { abilityMod } from '../utils/monster'
+
+// Los soundClip "internal" de 5etools viven en el repo fuente (5e.tools bloquea clientes no-navegador).
+export const AUDIO_5ETOOLS_BASE = 'https://raw.githubusercontent.com/5etools-mirror-3/5etools-src/main/audio/'
 
 // --- Mapas de códigos 5etools ---
 const SIZE: Record<string, string> = { T: 'Tiny', S: 'Small', M: 'Medium', L: 'Large', H: 'Huge', G: 'Gargantuan' }
@@ -15,6 +20,16 @@ const ABILITIES: [keyof Monster['stats'], string][] = [
 const titleCase = (s: string): string => s.replace(/(^|[\s_])(\w)/g, (_m, p, c) => p + c.toUpperCase())
 
 interface RawAbility { name?: string; entries?: unknown[] }
+interface RawSpellcasting {
+    name?: string
+    headerEntries?: unknown[]
+    will?: unknown[]
+    daily?: Record<string, unknown[]>
+    recharge?: Record<string, unknown[]>
+    restLong?: Record<string, unknown[]>
+    spells?: Record<string, { slots?: number; spells?: unknown[] }>
+    displayAs?: string
+}
 interface RawCreature {
     name?: string; size?: unknown; type?: unknown; alignment?: unknown
     ac?: unknown; hp?: { average?: number; formula?: string }; speed?: Record<string, unknown>
@@ -22,7 +37,8 @@ interface RawCreature {
     save?: Record<string, string>; skill?: Record<string, string>; passive?: number
     senses?: unknown[]; languages?: unknown[]
     resist?: unknown[]; immune?: unknown[]; vulnerable?: unknown[]; conditionImmune?: unknown[]
-    cr?: unknown
+    cr?: unknown; initiative?: unknown; soundClip?: unknown
+    spellcasting?: RawSpellcasting[]
     trait?: RawAbility[]; action?: RawAbility[]; bonus?: RawAbility[]; reaction?: RawAbility[]; legendary?: RawAbility[]
 }
 
@@ -113,6 +129,50 @@ function toAbilities(list: RawAbility[] | undefined, key: string, prefix: string
     })
 }
 
+function spellList(list: unknown[] | undefined): string {
+    return (list ?? []).filter((s): s is string => typeof s === 'string').map(strip5eTags).join(', ')
+}
+
+// "1e" → "1/Day Each", "2" → "2/Day"
+function freqLabel(key: string, unit: string): string {
+    const each = key.endsWith('e')
+    return `${key.replace(/e$/, '')}/${unit}${each ? ' Each' : ''}`
+}
+
+// Aplana un bloque `spellcasting` 2024/clásico a markdown por secciones.
+function spellcastingDescription(sc: RawSpellcasting): string {
+    const parts: string[] = []
+    const header = flattenEntries(sc.headerEntries ?? [])
+    if (header) parts.push(header)
+    if (sc.will?.length) parts.push(`**At Will:** ${spellList(sc.will)}`)
+    for (const [k, list] of Object.entries(sc.daily ?? {})) parts.push(`**${freqLabel(k, 'Day')}:** ${spellList(list)}`)
+    for (const [k, list] of Object.entries(sc.recharge ?? {})) parts.push(`**Recharge ${k}:** ${spellList(list)}`)
+    for (const [k, list] of Object.entries(sc.restLong ?? {})) parts.push(`**${freqLabel(k, 'Long Rest')}:** ${spellList(list)}`)
+    for (const [lvl, group] of Object.entries(sc.spells ?? {})) {
+        const label = lvl === '0' ? 'Cantrips (At Will)' : `Level ${lvl}${group.slots ? ` (${group.slots} Slots)` : ''}`
+        parts.push(`**${label}:** ${spellList(group.spells)}`)
+    }
+    return parts.join('\n')
+}
+
+// Bono de iniciativa 2024: número directo, o mod DES + proficiency × PB(cr).
+function mapInitiative(v: unknown, dex: number, cr: number): number | undefined {
+    if (typeof v === 'number') return v
+    if (v && typeof v === 'object' && 'proficiency' in v) {
+        const prof = Number((v as { proficiency?: unknown }).proficiency ?? 0)
+        return abilityMod(dex) + prof * crToProficiency(cr)
+    }
+    return undefined
+}
+
+function mapSoundClip(v: unknown): string | undefined {
+    if (!v || typeof v !== 'object') return undefined
+    const o = v as { type?: string; path?: string; url?: string }
+    if (o.type === 'internal' && o.path) return AUDIO_5ETOOLS_BASE + o.path
+    if (o.type === 'external' && o.url) return o.url
+    return undefined
+}
+
 export function convert5eMonster(rawInput: unknown): Monster {
     const raw = (rawInput ?? {}) as RawCreature
     const id = `hb:${crypto.randomUUID()}`
@@ -134,6 +194,17 @@ export function convert5eMonster(rawInput: unknown): Monster {
     const resistances = mapList(raw.resist)
     const immunities = mapList(raw.immune)
     const conditionImmunities = mapList(raw.conditionImmune)
+
+    const initiativeBonus = mapInitiative(raw.initiative, raw.dex ?? 10, cr)
+    const soundClipUrl = mapSoundClip(raw.soundClip)
+    const scAll = (raw.spellcasting ?? []).map((sc) => ({
+        ability: {
+            id: `${id}:spellcasting:${crypto.randomUUID()}`,
+            name: sc.name ?? 'Spellcasting',
+            description: spellcastingDescription(sc),
+        },
+        asAction: sc.displayAs === 'action',
+    }))
 
     return {
         id,
@@ -160,12 +231,14 @@ export function convert5eMonster(rawInput: unknown): Monster {
         ...(languages ? { languages } : {}),
         cr,
         xp: crToXp(cr),
-        passives,
-        actions: toAbilities(raw.action, 'action', id),
+        passives: [...passives, ...scAll.filter((s) => !s.asAction).map((s) => s.ability)],
+        actions: [...toAbilities(raw.action, 'action', id), ...scAll.filter((s) => s.asAction).map((s) => s.ability)],
         bonusActions: toAbilities(raw.bonus, 'bonus', id),
         reactions: toAbilities(raw.reaction, 'reaction', id),
         legendaryActions: toAbilities(raw.legendary, 'legendary', id),
         ...(legendaryResistance !== undefined ? { legendaryResistance } : {}),
+        ...(initiativeBonus !== undefined ? { initiativeBonus } : {}),
+        ...(soundClipUrl ? { soundClipUrl } : {}),
     }
 }
 
@@ -192,6 +265,7 @@ export function monsterTo5e(m: Monster): object {
         hp: { average: m.hp.average, ...(m.hp.formula ? { formula: m.hp.formula } : {}) },
         str: m.stats.str, dex: m.stats.dex, con: m.stats.con, int: m.stats.int, wis: m.stats.wis, cha: m.stats.cha,
         cr: crToStr(m.cr),
+        ...(m.soundClipUrl ? { soundClip: { type: 'external', url: m.soundClipUrl } } : {}),
         trait: abilitiesTo5e(m.passives),
         action: abilitiesTo5e(m.actions),
         bonus: abilitiesTo5e(m.bonusActions),

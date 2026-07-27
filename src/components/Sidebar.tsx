@@ -10,10 +10,9 @@ const navItems = [
     { path: '/encounters', label: 'nav.encounters' },
     { path: '/party', label: 'nav.party' },
     { path: '/rules', label: 'nav.glossary' },
-    { path: '/music', label: 'nav.music' },
+    { path: '/audio', label: 'nav.audio' },
     { path: '/journal', label: 'nav.wiki' },
     { path: '/map', label: 'nav.map' },
-    { path: '/soundboard', label: 'nav.soundboard' },
 ]
 
 function Sidebar() {

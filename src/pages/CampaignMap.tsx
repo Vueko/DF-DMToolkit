@@ -7,6 +7,7 @@ import type { NoteRef } from '../vault/wikilinks'
 import { saveMapImage, getMapImage } from '../utils/mapDb'
 import { MapIcon } from '../components/icons'
 import { useT } from '../i18n'
+import { RequirementNotice } from '../components/ui/RequirementNotice'
 
 
 const ZOOM_SPEED = 0.1
@@ -250,11 +251,7 @@ function CampaignMap() {
     }
 
     if (!currentCampaignId) {
-        return (
-            <div className="flex items-center justify-center h-full text-ui-muted">
-                <p>{t('map.selectCampaignFirst')}</p>
-            </div>
-        )
+        return <RequirementNotice title={t('map.selectCampaignFirst')} link="/campaigns" linkLabel={t('nav.campaigns')} />
     }
 
     const hasPanelOpen = pendingPos !== null || selectedMarker !== null

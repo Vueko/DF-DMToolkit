@@ -1,10 +1,9 @@
-import { useState } from 'react'
 import SceneWidget from '../components/dashboard/SceneWidget'
 import CombatBoard from '../components/combat/CombatBoard'
 import RulesWidget from '../components/dashboard/RulesWidget'
 import MoodWidget from '../components/dashboard/MoodWidget'
 import PlayerScreenWidget from '../components/dashboard/PlayerScreenWidget'
-import PrepChecklistModal from '../components/dashboard/PrepChecklistModal'
+import GetStartedPanel from '../components/dashboard/GetStartedPanel'
 import { useCampaignStore } from '../store/campaignStore'
 import { useT } from '../i18n'
 
@@ -14,9 +13,6 @@ function DMDashboard() {
 
     const currentCampaign = campaigns.find((c) => c.id === currentCampaignId) ?? null
     const currentSession = currentCampaign?.sessions.find((s) => s.id === currentSessionId) ?? null
-
-    const hasCampaign = currentCampaign !== null
-    const [prepOpen, setPrepOpen] = useState(currentSession === null)
 
     return (
         <div className="flex flex-col gap-6">
@@ -38,31 +34,23 @@ function DMDashboard() {
                     )}
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
-                    <button
-                        onClick={() => setPrepOpen(true)}
-                        className="text-ui-muted hover:text-ui-text bg-ui-surface hover:bg-ui-surface2 border border-ui-surface2 px-3 py-2 rounded-lg transition-colors text-sm font-medium"
-                    >
-                        {t('dashboard.prep')}
-                    </button>
                     <MoodWidget />
                 </div>
             </div>
 
-            {/* 3 bandas: combate / escenas+reglas / pantalla de jugador */}
-            <div className={`flex flex-col gap-4 ${!hasCampaign ? 'opacity-40 pointer-events-none' : ''}`}>
-                <CombatBoard />
-                <div className="grid grid-cols-2 gap-4">
-                    <SceneWidget />
-                    <RulesWidget />
+            {/* Sin sesión activa: guía del flujo de juego. Con ella: las 3 bandas de widgets. */}
+            {currentSession === null ? (
+                <GetStartedPanel />
+            ) : (
+                <div className="flex flex-col gap-4">
+                    <CombatBoard />
+                    <div className="grid grid-cols-2 gap-4">
+                        <SceneWidget />
+                        <RulesWidget />
+                    </div>
+                    <PlayerScreenWidget />
                 </div>
-                <PlayerScreenWidget />
-            </div>
-
-            <PrepChecklistModal
-                campaign={currentCampaign}
-                open={prepOpen}
-                onClose={() => setPrepOpen(false)}
-            />
+            )}
         </div>
     )
 }

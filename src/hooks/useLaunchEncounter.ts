@@ -34,6 +34,7 @@ export function useLaunchEncounter() {
                 existing = [...existing, ...group.instances]
                 useCombatStore.getState().addCombatants(encounter.id, group.combatants, group.instances)
             }
+            useCombatStore.getState().rollEnemyInitiative(encounter.id)
         }
         navigate('/')
     }, [monstersById, navigate])

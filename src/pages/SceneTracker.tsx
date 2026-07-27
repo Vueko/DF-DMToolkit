@@ -1,11 +1,19 @@
 import { useState, useMemo, type ReactNode } from 'react'
 import { useCampaignStore } from '../store/campaignStore'
-import type { Scene, SceneFlagType } from '../types'
+import type { Scene, SceneFlagType, SessionItem, SessionItemKind } from '../types'
 import { SharedMarkdown } from '../components/SharedMarkdown'
 import { useLaunchEncounter } from '../hooks/useLaunchEncounter'
 import { Button, Input, Select, Textarea } from '../components/ui'
 import { BoltIcon, ClockIcon, ScalesIcon } from '../components/icons'
 import { useT } from '../i18n'
+import { RequirementNotice } from '../components/ui/RequirementNotice'
+import { groupSessionItems } from '../components/session/groupSessionItems'
+import SessionItemSections from '../components/session/SessionItemSections'
+import SessionItemModal from '../components/session/SessionItemModal'
+import { KIND_CONFIG } from '../components/session/SessionItemRow'
+
+// Scenes en la vista unificada se listan por estado: activas primero, luego próximas, luego hechas.
+const STATUS_ORDER: Record<Scene['status'], number> = { active: 0, upcoming: 1, completed: 2 }
 
 const FLAG_CONFIG: Record<SceneFlagType, { icon: ReactNode; bg: string; border: string; text: string; activeBg: string; label: string; placeholder: string }> = {
     event:    { icon: <BoltIcon className="w-4 h-4"/>, bg: 'bg-danger-primary/10', border: 'border-danger-primary/25', text: 'text-danger-primary', activeBg: 'bg-danger-primary/20 border-danger-primary/50',  label: 'scenes.flagTypeEvent',    placeholder: 'scenes.flagPlaceholderEvent' },
@@ -15,7 +23,8 @@ const FLAG_CONFIG: Record<SceneFlagType, { icon: ReactNode; bg: string; border: 
 
 function SceneTracker() {
     const t = useT()
-    const { campaigns, currentCampaignId, updateScene, addScene, removeScene } = useCampaignStore()
+    const { campaigns, currentCampaignId, updateScene, addScene, removeScene,
+        addSessionItem, updateSessionItem, removeSessionItem } = useCampaignStore()
     const currentCampaign = campaigns.find((c) => c.id === currentCampaignId) ?? null
     const launchEncounter = useLaunchEncounter()
 
@@ -30,6 +39,8 @@ function SceneTracker() {
     const [newCountMax, setNewCountMax] = useState(0)
     const [descriptionMode, setDescriptionMode] = useState<'write' | 'preview'>('write')
     const [selectedSessionId, setSelectedSessionId] = useState<string>('all')
+    const [editingItem, setEditingItem] = useState<{ item: SessionItem; isCreate: boolean } | null>(null)
+    const [newMenuOpen, setNewMenuOpen] = useState(false)
 
     const scenes = useMemo(() => currentCampaign?.scenes ?? [], [currentCampaign?.scenes])
     const sessions = useMemo(() => currentCampaign?.sessions ?? [], [currentCampaign?.sessions])
@@ -58,20 +69,28 @@ function SceneTracker() {
         return scenes.filter((s) => !assignedIds.has(s.id)).length
     }, [sessions, scenes])
 
+    const selectedSession = sessions.find((s) => s.id === selectedSessionId)
+    const groupedItems = useMemo(() => groupSessionItems(selectedSession?.items), [selectedSession?.items])
+    const sortedScenes = useMemo(
+        () => [...visibleScenes].sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status]),
+        [visibleScenes],
+    )
+
     if (!currentCampaignId || !currentCampaign) {
-        return (
-            <div className="flex-1 flex items-center justify-center">
-                <div className="text-center bg-ui-surface p-8 rounded-xl border border-ui-surface2">
-                    <h2 className="text-xl text-ui-text font-display mb-2">{t('scenes.noCampaignSelected')}</h2>
-                    <p className="text-ui-muted text-sm">{t('scenes.noCampaignHint')}</p>
-                </div>
-            </div>
-        )
+        return <RequirementNotice title={t('scenes.noCampaignSelected')} hint={t('scenes.noCampaignHint')} link="/campaigns" linkLabel={t('nav.campaigns')} />
     }
 
-    const upcoming = visibleScenes.filter((s) => s.status === 'upcoming')
-    const active = visibleScenes.filter((s) => s.status === 'active')
-    const completed = visibleScenes.filter((s) => s.status === 'completed')
+    const openCreateItem = (kind: SessionItemKind) =>
+        setEditingItem({ item: { id: crypto.randomUUID(), kind, title: '', done: false }, isCreate: true })
+
+    const saveItem = (draft: SessionItem) => {
+        if (!currentCampaignId || selectedSessionId === 'all' || selectedSessionId === 'unassigned') return
+        if (editingItem?.isCreate) addSessionItem(currentCampaignId, selectedSessionId, draft)
+        else updateSessionItem(currentCampaignId, selectedSessionId, draft.id, draft)
+        setEditingItem(null)
+    }
+
+    const startCreateScene = () => { setIsCreating(true); setDescriptionMode('write') }
 
     const handleCreateScene = () => {
         if (!newTitle.trim()) return
@@ -247,8 +266,6 @@ function SceneTracker() {
         )
     }
 
-    const selectedSession = sessions.find((s) => s.id === selectedSessionId)
-
     return (
         <div className="flex h-full overflow-hidden">
 
@@ -327,54 +344,74 @@ function SceneTracker() {
                         </h2>
                         <p className="text-ui-muted text-xs">{t(visibleScenes.length === 1 ? 'scenes.sceneCountOne' : 'scenes.sceneCountOther', { count: visibleScenes.length })}</p>
                     </div>
-                    <button
-                        onClick={() => { setIsCreating(true); setDescriptionMode('write') }}
-                        className="px-4 py-2 bg-danger-primary hover:bg-danger-gold text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
-                    >
-                        + {t('scenes.newScene')}
-                    </button>
+                    <div className="relative">
+                        <button
+                            onClick={() => setNewMenuOpen((o) => !o)}
+                            className="px-4 py-2 bg-danger-primary hover:bg-danger-gold text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5"
+                        >
+                            + {t('sessionLog.new')}
+                            <span className="text-[10px]">▾</span>
+                        </button>
+                        {newMenuOpen && (
+                            <>
+                                <div className="fixed inset-0 z-40" onClick={() => setNewMenuOpen(false)} />
+                                <div className="absolute right-0 mt-1 z-50 w-44 bg-ui-surface border border-ui-surface2 rounded-lg shadow-xl py-1 flex flex-col">
+                                    <button
+                                        onClick={() => { setNewMenuOpen(false); startCreateScene() }}
+                                        className="flex items-center gap-2 px-3 py-1.5 text-sm text-ui-text hover:bg-ui-surface2 transition-colors text-left"
+                                    >
+                                        <span className="w-2 h-2 rounded-full bg-danger-primary shrink-0" />
+                                        {t('sessionLog.newScene')}
+                                    </button>
+                                    {selectedSession && (['clue', 'loot', 'message', 'note'] as SessionItemKind[]).map((k) => {
+                                        const cfg = KIND_CONFIG[k]
+                                        return (
+                                            <button
+                                                key={k}
+                                                onClick={() => { setNewMenuOpen(false); openCreateItem(k) }}
+                                                className="flex items-center gap-2 px-3 py-1.5 text-sm text-ui-text hover:bg-ui-surface2 transition-colors text-left"
+                                            >
+                                                <span className={cfg.text}>{cfg.icon}</span>
+                                                {t(cfg.kindKey)}
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+                            </>
+                        )}
+                    </div>
                 </header>
 
-                <div className="flex-1 overflow-auto p-5">
-                    <div className="grid grid-cols-3 gap-4 items-start">
+                <div className="flex-1 overflow-auto p-5 flex flex-col gap-6">
 
-                        <div className="flex flex-col gap-3">
-                            <div className="flex items-center gap-2 pb-2 border-b border-ui-surface2">
-                                <span className="w-2 h-2 rounded-full bg-ui-muted shrink-0" />
-                                <h3 className="text-ui-text text-sm font-semibold">{t('scenes.colUpcoming')}</h3>
-                                <span className="ml-auto text-[10px] font-bold text-ui-muted bg-ui-surface2 px-2 py-0.5 rounded-full">{upcoming.length}</span>
-                            </div>
-                            <div className="flex flex-col gap-3">
-                                {upcoming.map(renderSceneCard)}
-                                {upcoming.length === 0 && <p className="text-xs text-ui-muted text-center py-6">{t('scenes.noUpcoming')}</p>}
-                            </div>
+                    {/* Scenes — ahora una sección más del registro, junto a pistas/botín/etc. */}
+                    <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-danger-primary shrink-0" />
+                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-ui-muted">{t('sessionLog.scenesSection')}</h4>
+                            <span className="text-[10px] bg-ui-surface2 px-1.5 rounded-full text-ui-muted font-bold">{sortedScenes.length}</span>
                         </div>
-
-                        <div className="flex flex-col gap-3">
-                            <div className="flex items-center gap-2 pb-2 border-b border-danger-primary/40">
-                                <span className="w-2 h-2 rounded-full bg-danger-primary animate-pulse shrink-0" />
-                                <h3 className="text-ui-text text-sm font-semibold">{t('scenes.colActive')}</h3>
-                                <span className="ml-auto text-[10px] font-bold text-ui-muted bg-ui-surface2 px-2 py-0.5 rounded-full">{active.length}</span>
+                        {sortedScenes.length === 0 ? (
+                            <p className="text-[11px] text-ui-muted italic px-1">{t('sessionLog.noScenes')}</p>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 items-start">
+                                {sortedScenes.map(renderSceneCard)}
                             </div>
-                            <div className="flex flex-col gap-3">
-                                {active.map(renderSceneCard)}
-                                {active.length === 0 && <p className="text-xs text-ui-muted text-center py-6">{t('scenes.noActive')}</p>}
-                            </div>
-                        </div>
-
-                        <div className="flex flex-col gap-3">
-                            <div className="flex items-center gap-2 pb-2 border-b border-arcane-light/40">
-                                <span className="w-2 h-2 rounded-full bg-arcane-light shrink-0" />
-                                <h3 className="text-ui-text text-sm font-semibold">{t('scenes.colCompleted')}</h3>
-                                <span className="ml-auto text-[10px] font-bold text-ui-muted bg-ui-surface2 px-2 py-0.5 rounded-full">{completed.length}</span>
-                            </div>
-                            <div className="flex flex-col gap-3">
-                                {completed.map(renderSceneCard)}
-                                {completed.length === 0 && <p className="text-xs text-ui-muted text-center py-6">{t('scenes.noCompleted')}</p>}
-                            </div>
-                        </div>
-
+                        )}
                     </div>
+
+                    {/* Pistas / botín / mensajes / notas — solo con una sesión concreta seleccionada */}
+                    {selectedSession && (
+                        <SessionItemSections
+                            grouped={groupedItems}
+                            showEmpty
+                            showAdd={false}
+                            onToggle={(item) => updateSessionItem(currentCampaignId, selectedSession.id, item.id, { done: !item.done })}
+                            onEdit={(item) => setEditingItem({ item, isCreate: false })}
+                            onRemove={(item) => removeSessionItem(currentCampaignId, selectedSession.id, item.id)}
+                            onAdd={openCreateItem}
+                        />
+                    )}
                 </div>
             </div>
 
@@ -589,6 +626,19 @@ function SceneTracker() {
 
                     </div>
                 </div>
+            )}
+
+            {editingItem && (
+                <SessionItemModal
+                    initial={editingItem.item}
+                    isCreate={editingItem.isCreate}
+                    onSave={saveItem}
+                    onDelete={editingItem.isCreate ? undefined : () => {
+                        if (selectedSession) removeSessionItem(currentCampaignId, selectedSession.id, editingItem.item.id)
+                        setEditingItem(null)
+                    }}
+                    onClose={() => setEditingItem(null)}
+                />
             )}
         </div>
     )

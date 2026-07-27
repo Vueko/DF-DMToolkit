@@ -1,7 +1,7 @@
 {
   "name": "dnd5e-toolkit",
   "private": true,
-  "version": "0.1.1",
+  "version": "1.0.0",
   "description": "Desktop D&D 5e DM toolkit for encounter prep, initiative, SRD lookup, notes, maps, music, soundboard, and player display.",
   "author": "Carlos B. Gómez García",
   "license": "MIT",
@@ -10,8 +10,8 @@
     "dev": "vite",
     "dev:electron": "tsc -p tsconfig.electron.json && concurrently \"vite\" \"wait-on tcp:5173 && electron .\"",
     "build": "tsc -b && vite build",
-    "build:electron": "vite build && tsc -p tsconfig.electron.json",
-    "dist:win": "npm run build:electron && electron-builder --win --config.directories.output=%TEMP%\\\\df-dmtoolkit-release",
+    "build:electron": "vite build && tsc -p tsconfig.electron.json && node scripts/write-electron-package.cjs",
+    "dist:win": "npm run build:electron && electron-builder --win",
     "preview": "vite preview",
     "lint": "eslint .",
     "test": "vitest run",
@@ -71,6 +71,9 @@
       "dist/**/*",
       "dist-electron/**/*"
     ],
+    "extraResources": [
+      { "from": "resources/sounds", "to": "sounds" }
+    ],
     "win": {
       "artifactName": "DnD5e DMToolkit.exe",
       "target": [
@@ -87,7 +90,9 @@
       "oneClick": false,
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
-      "deleteAppDataOnUninstall": false
+      "deleteAppDataOnUninstall": false,
+      "multiLanguageInstaller": true,
+      "installerLanguages": ["en_US", "es_ES"]
     }
   }
 }

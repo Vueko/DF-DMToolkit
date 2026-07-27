@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { useSettingsStore, migrateSettingsV1toV2, migrateSettingsV2toV3, migrateSettingsV3toV4 } from './settingsStore'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { useSettingsStore, detectDefaultLanguage, migrateSettingsV1toV2, migrateSettingsV2toV3, migrateSettingsV3toV4 } from './settingsStore'
 
 beforeEach(() => useSettingsStore.setState({ uiScale: 1.0, theme: 'parchment', vaultPath: null, playerWidgetCollapsed: false, language: 'en', srdVersion: 'srd-2024' }))
 
@@ -23,6 +23,26 @@ describe('settingsStore', () => {
     it('setLanguage', () => {
         useSettingsStore.getState().setLanguage('es')
         expect(useSettingsStore.getState().language).toBe('es')
+    })
+})
+
+describe('detectDefaultLanguage', () => {
+    // No usar unstubAllGlobals: borraría el stub de `window` del setup global.
+    const originalNavigator = globalThis.navigator
+    afterEach(() => vi.stubGlobal('navigator', originalNavigator))
+    it('es-* → es', () => {
+        vi.stubGlobal('navigator', { language: 'es-MX' })
+        expect(detectDefaultLanguage()).toBe('es')
+    })
+    it('otros → en', () => {
+        vi.stubGlobal('navigator', { language: 'en-US' })
+        expect(detectDefaultLanguage()).toBe('en')
+        vi.stubGlobal('navigator', { language: 'fr-FR' })
+        expect(detectDefaultLanguage()).toBe('en')
+    })
+    it('sin navigator → en', () => {
+        vi.stubGlobal('navigator', undefined)
+        expect(detectDefaultLanguage()).toBe('en')
     })
 })
 

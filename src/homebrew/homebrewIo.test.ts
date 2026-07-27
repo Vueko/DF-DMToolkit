@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { detectImport, import5eCollection, importNativeCollection, buildNativeExport, build5eExport } from './homebrewIo'
-import { chillbornZombie } from './fixtures/homebrew5e.fixture'
+import { detectImport, normalize5eImport, import5eCollection, importNativeCollection, buildNativeExport, build5eExport } from './homebrewIo'
+import { chillbornZombie, adultBronzeDragonXmm } from './fixtures/homebrew5e.fixture'
 
 let n = 0
 const makeId = () => `id-${++n}`
@@ -16,6 +16,33 @@ describe('detectImport', () => {
     it('invalid', () => {
         expect(detectImport({ nope: 1 }).kind).toBe('invalid')
         expect(detectImport(null).kind).toBe('invalid')
+    })
+})
+
+describe('normalize5eImport — export de lista (array raíz)', () => {
+    it('envuelve criaturas y hereda el source dominante', () => {
+        const norm = normalize5eImport([adultBronzeDragonXmm]) as Record<string, unknown>
+        expect(detectImport(norm).kind).toBe('5etools')
+        expect(Array.isArray(norm.monster)).toBe(true)
+        const r = import5eCollection(norm, makeId)
+        expect(r.monsters).toHaveLength(1)
+        expect(r.collection.name).toBe('XMM')
+    })
+    it('clasifica conjuros y objetos por campos discriminantes', () => {
+        const norm = normalize5eImport([
+            { name: 'Fire Bolt', level: 0, school: 'V', source: 'XPHB' },
+            { name: 'Bag of Holding', rarity: 'uncommon', source: 'XDMG' },
+        ]) as Record<string, unknown>
+        expect((norm.spell as unknown[]).length).toBe(1)
+        expect((norm.item as unknown[]).length).toBe(1)
+    })
+    it('array sin entradas reconocibles sigue siendo invalid', () => {
+        expect(detectImport(normalize5eImport([{ foo: 1 }]))).toEqual({ kind: 'invalid' })
+        expect(detectImport(normalize5eImport([]))).toEqual({ kind: 'invalid' })
+    })
+    it('objetos raíz pasan sin cambios', () => {
+        const obj = { monster: [adultBronzeDragonXmm] }
+        expect(normalize5eImport(obj)).toBe(obj)
     })
 })
 

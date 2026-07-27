@@ -1,6 +1,10 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useCampaignStore } from '../../store/campaignStore'
-import type { Scene, SceneFlagType } from '../../types'
+import type { Scene, SceneFlagType, SessionItem, SessionItemKind } from '../../types'
+import { groupSessionItems } from '../session/groupSessionItems'
+import SessionItemSections from '../session/SessionItemSections'
+import SessionItemModal from '../session/SessionItemModal'
+import { KIND_CONFIG } from '../session/SessionItemRow'
 import { useLaunchEncounter } from '../../hooks/useLaunchEncounter'
 import { useT } from '../../i18n'
 
@@ -37,6 +41,9 @@ function SceneWidget() {
         updateScene,
         addSceneToSession,
         removeSceneFromSession,
+        addSessionItem,
+        updateSessionItem,
+        removeSessionItem,
     } = useCampaignStore()
     const launchEncounter = useLaunchEncounter()
 
@@ -53,6 +60,9 @@ function SceneWidget() {
         [currentCampaign?.scenes, currentSession?.sceneIds]
     )
 
+    const grouped = useMemo(() => groupSessionItems(currentSession?.items), [currentSession?.items])
+    const [editingItem, setEditingItem] = useState<{ item: SessionItem; isCreate: boolean } | null>(null)
+
     if (!currentCampaignId || !currentSessionId) {
         return (
             <div className="bg-ui-surface rounded-xl border border-ui-surface2/60 p-5 flex flex-col gap-3">
@@ -60,6 +70,16 @@ function SceneWidget() {
                 <p className="text-ui-muted text-sm text-center py-4">{t('dashboard.noActiveSessionGoCampaigns')}</p>
             </div>
         )
+    }
+
+    const openCreateItem = (kind: SessionItemKind) =>
+        setEditingItem({ item: { id: crypto.randomUUID(), kind, title: '', done: false }, isCreate: true })
+
+    const saveItem = (draft: SessionItem) => {
+        if (!currentCampaignId || !currentSessionId) return
+        if (editingItem?.isCreate) addSessionItem(currentCampaignId, currentSessionId, draft)
+        else updateSessionItem(currentCampaignId, currentSessionId, draft.id, draft)
+        setEditingItem(null)
     }
 
     function renderFlag(scene: Scene) {
@@ -207,6 +227,30 @@ function SceneWidget() {
                 })}
             </div>
 
+            <SessionItemSections
+                grouped={grouped}
+                showEmpty={false}
+                showAdd={false}
+                onToggle={(item) => updateSessionItem(currentCampaignId, currentSessionId, item.id, { done: !item.done })}
+                onEdit={(item) => setEditingItem({ item, isCreate: false })}
+                onRemove={(item) => removeSessionItem(currentCampaignId, currentSessionId, item.id)}
+                onAdd={openCreateItem}
+            />
+
+            <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                <span className="text-[10px] uppercase font-bold text-ui-muted tracking-wider">{t('sessionItem.quickAdd')}</span>
+                {(['clue', 'loot', 'message', 'note'] as SessionItemKind[]).map((k) => (
+                    <button
+                        key={k}
+                        onClick={() => openCreateItem(k)}
+                        className="text-[11px] px-2 py-0.5 rounded-lg bg-ui-surface2 text-ui-muted hover:text-ui-text transition-colors flex items-center gap-1"
+                    >
+                        <span className={KIND_CONFIG[k].text}>{KIND_CONFIG[k].icon}</span>
+                        + {t(KIND_CONFIG[k].addKey)}
+                    </button>
+                ))}
+            </div>
+
             {unlinkedScenes.length > 0 && (
                 <div className="flex flex-col gap-1">
                     <span className="text-ui-muted text-xs">{t('dashboard.addExistingScene')}</span>
@@ -222,6 +266,19 @@ function SceneWidget() {
                         ))}
                     </div>
                 </div>
+            )}
+
+            {editingItem && (
+                <SessionItemModal
+                    initial={editingItem.item}
+                    isCreate={editingItem.isCreate}
+                    onSave={saveItem}
+                    onDelete={editingItem.isCreate ? undefined : () => {
+                        removeSessionItem(currentCampaignId, currentSessionId, editingItem.item.id)
+                        setEditingItem(null)
+                    }}
+                    onClose={() => setEditingItem(null)}
+                />
             )}
 
         </div>

@@ -9,6 +9,7 @@ import { ConditionBadge } from '../components/conditions/ConditionBadge'
 import { ConditionPicker } from '../components/conditions/ConditionPicker'
 import { Button, Input, Textarea, Panel, PageHeader, EmptyState } from '../components/ui'
 import { useT } from '../i18n'
+import { RequirementNotice } from '../components/ui/RequirementNotice'
 
 // Retrato del PC: guardado en el almacén de imágenes existente (fs:save-player-image).
 function PcAvatar({ member, onChange }: { member: PartyMember; onChange: (imageStoredId: string) => void }) {
@@ -100,14 +101,7 @@ function Party() {
     const { addMember, updateMember, removeMember } = usePartyStore()
 
     if (!currentCampaignId || !campaign) {
-        return (
-            <div className="flex-1 flex items-center justify-center h-full">
-                <div className="text-center bg-ui-surface p-8 rounded-xl border border-ui-surface2">
-                    <h2 className="text-xl text-ui-text font-display mb-2">{t('party.noCampaign')}</h2>
-                    <p className="text-ui-muted text-sm">{t('party.noCampaignHint')}</p>
-                </div>
-            </div>
-        )
+        return <RequirementNotice title={t('party.noCampaign')} hint={t('party.noCampaignHint')} link="/campaigns" linkLabel={t('nav.campaigns')} />
     }
 
     const patch = (id: string, updates: Partial<PartyMember>) => updateMember(currentCampaignId, id, updates)

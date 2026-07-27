@@ -166,3 +166,12 @@ export function SquareIcon({ className = 'w-4 h-4' }: { className?: string }) {
         </svg>
     )
 }
+export function D20Icon({ className = 'w-4 h-4' }: { className?: string }) {
+    return (
+        <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2 3 7v10l9 5 9-5V7l-9-5z" />
+            <path d="m12 5 5.5 9.5h-11L12 5z" />
+            <path d="M12 2v3M3 7l3.5 7.5M21 7l-3.5 7.5M6.5 14.5 12 22M17.5 14.5 12 22" />
+        </svg>
+    )
+}

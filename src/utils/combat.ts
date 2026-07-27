@@ -30,7 +30,10 @@ export function buildEnemyGroup(
                 ? { legendaryResistanceMax: monster.legendaryResistance, legendaryResistanceLeft: monster.legendaryResistance }
                 : {}),
         })
-        combatants.push({ id: instanceId, kind: 'enemy', refId: instanceId, initiative: 0, dexScore: monster.stats.dex })
+        combatants.push({
+            id: instanceId, kind: 'enemy', refId: instanceId, initiative: 0, dexScore: monster.stats.dex,
+            ...(monster.initiativeBonus !== undefined ? { initiativeBonus: monster.initiativeBonus } : {}),
+        })
     }
     return { instances, combatants }
 }

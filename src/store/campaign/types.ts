@@ -1,6 +1,6 @@
 import type { StoreApi } from 'zustand'
 import type {
-    Campaign, Session, Scene, Track, Playlist,
+    Campaign, Session, SessionItem, Scene, Track, Playlist,
     CampaignMapData, Encounter, PlayerScreenImage, MapLibraryEntry,
 } from '../../types'
 
@@ -20,6 +20,10 @@ export interface CampaignState {
     removeSceneFromSession: (campaignId: string, sessionId: string, sceneId: string) => void
     addEncounterToSession: (campaignId: string, sessionId: string, encounterId: string) => void
     removeEncounterFromSession: (campaignId: string, sessionId: string, encounterId: string) => void
+
+    addSessionItem: (campaignId: string, sessionId: string, item: SessionItem) => void
+    updateSessionItem: (campaignId: string, sessionId: string, itemId: string, updates: Partial<SessionItem>) => void
+    removeSessionItem: (campaignId: string, sessionId: string, itemId: string) => void
 
     addScene: (campaignId: string, scene: Scene) => void
     updateScene: (campaignId: string, sceneId: string, updates: Partial<Scene>) => void

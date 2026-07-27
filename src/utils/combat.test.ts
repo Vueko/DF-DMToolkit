@@ -34,6 +34,14 @@ describe('buildEnemyGroup', () => {
         const { instances: d } = buildEnemyGroup(dragon, 1, [], makeId)
         expect(d[0]).toMatchObject({ legendaryActionsMax: 3, legendaryActionsLeft: 3, legendaryResistanceMax: 3, legendaryResistanceLeft: 3 })
     })
+    it('propaga initiativeBonus del monstruo al combatant', () => {
+        const { combatants } = buildEnemyGroup({ ...dragon, initiativeBonus: 10 }, 1, [], makeId)
+        expect(combatants[0].initiativeBonus).toBe(10)
+    })
+    it('sin initiativeBonus el combatant no lo lleva', () => {
+        const { combatants } = buildEnemyGroup(goblin, 1, [], makeId)
+        expect(combatants[0].initiativeBonus).toBeUndefined()
+    })
 })
 
 describe('sortCombatants', () => {

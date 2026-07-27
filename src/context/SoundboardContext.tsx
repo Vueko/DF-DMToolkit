@@ -11,6 +11,11 @@ interface SoundboardContextValue {
 
 const SoundboardContext = createContext<SoundboardContextValue | null>(null)
 
+const resolveSoundData = (sound: Sound): Promise<Uint8Array | null> =>
+    sound.builtin
+        ? window.electron.fs.getBuiltinAudio(sound.storedId)
+        : window.electron.fs.getAudio(sound.storedId)
+
 export function SoundboardProvider({ children }: { children: React.ReactNode }) {
     const ambientRefs = useRef<Map<string, HTMLAudioElement>>(new Map())
     const blobUrlRefs = useRef<Map<string, string>>(new Map())
@@ -18,7 +23,7 @@ export function SoundboardProvider({ children }: { children: React.ReactNode }) 
     const { setActiveAmbientIds } = useSoundboardStore()
 
     const playOneshot = async (sound: Sound): Promise<void> => {
-        const data = await window.electron.fs.getAudio(sound.storedId)
+        const data = await resolveSoundData(sound)
         if (!data) return
         const url = URL.createObjectURL(new Blob([new Uint8Array(data)]))
         const audio = new Audio(url)
@@ -42,7 +47,7 @@ export function SoundboardProvider({ children }: { children: React.ReactNode }) 
         if (pendingAmbientIds.current.has(sound.id)) return
         pendingAmbientIds.current.add(sound.id)
         try {
-            const data = await window.electron.fs.getAudio(sound.storedId)
+            const data = await resolveSoundData(sound)
             if (!data) return
             const url = URL.createObjectURL(new Blob([new Uint8Array(data)]))
             const audio = new Audio(url)

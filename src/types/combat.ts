@@ -22,6 +22,7 @@ export interface Combatant {
     refId: string               // PartyMember.id | EnemyInstance.instanceId
     initiative: number
     dexScore?: number           // desempate
+    initiativeBonus?: number    // bono 2024 (sustituye al mod de DES en el auto-roll)
     hidden?: boolean            // no se muestra en pantalla de jugador
 }
 

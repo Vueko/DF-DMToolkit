@@ -2,7 +2,7 @@ import { useBestiaryStore } from '../store/bestiaryStore'
 import { useHomebrewStore } from '../store/homebrewStore'
 import { useT } from '../i18n'
 import {
-    detectImport, import5eCollection, importNativeCollection,
+    detectImport, normalize5eImport, import5eCollection, importNativeCollection,
     buildNativeExport, build5eExport, type ImportResult,
 } from './homebrewIo'
 
@@ -32,7 +32,7 @@ export function useHomebrewIo() {
         const res = await window.electron.dialog.openJson({ filters: [{ name: 'JSON', extensions: ['json'] }] })
         if (res.canceled || !res.content) return
         let parsed: unknown
-        try { parsed = JSON.parse(res.content) } catch { alert(t('bestiary.importInvalid')); return }
+        try { parsed = normalize5eImport(JSON.parse(res.content)) } catch { alert(t('bestiary.importInvalid')); return }
         const { kind } = detectImport(parsed)
         const makeId = () => crypto.randomUUID()
         if (kind === '5etools') ingest(import5eCollection(parsed, makeId))

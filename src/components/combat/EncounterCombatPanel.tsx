@@ -79,6 +79,7 @@ export function EncounterCombatPanel({ encounter, campaignId }: EncounterCombatP
             existing = [...existing, ...group.instances]
             store.addCombatants(encounter.id, group.combatants, group.instances)
         }
+        store.rollEnemyInitiative(encounter.id)
     }
 
     const handleAddMonster = (monster: Monster) => {

@@ -40,6 +40,8 @@ export interface Monster {
     reactions: MonsterAbility[]
     legendaryActions: MonsterAbility[]
     legendaryResistance?: number  // usos por día
+    initiativeBonus?: number      // bono de iniciativa 2024 (mod DES + competencia)
+    soundClipUrl?: string         // audio del monstruo (streaming, formato 2024)
     lairActions?: MonsterAbility[]
     imageStoredId?: string        // opcional, homebrew
     collectionId?: string         // colección homebrew de la que proviene (sin ella = creado a mano)

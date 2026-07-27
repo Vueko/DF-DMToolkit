@@ -13,6 +13,7 @@ import { MonsterCard } from '../components/bestiary/MonsterCard'
 import { MonsterTile } from '../components/bestiary/MonsterTile'
 import { Button, Input, Select, Textarea } from '../components/ui'
 import { useT } from '../i18n'
+import { RequirementNotice } from '../components/ui/RequirementNotice'
 
 const DIFFICULTY_STYLE: Record<'trivial' | 'low' | 'moderate' | 'high', { badge: string; bar: string }> = {
     trivial: { badge: 'bg-ui-surface2 text-ui-muted', bar: 'bg-ui-muted' },
@@ -74,14 +75,7 @@ function EncounterBuilder() {
     const style = DIFFICULTY_STYLE[difficulty]
 
     if (!currentCampaignId || !campaign) {
-        return (
-            <div className="flex-1 flex items-center justify-center h-full">
-                <div className="text-center bg-ui-surface p-8 rounded-xl border border-ui-surface2">
-                    <h2 className="text-xl text-ui-text font-display mb-2">{t('encounters.noCampaign')}</h2>
-                    <p className="text-ui-muted text-sm">{t('encounters.noCampaignHint')}</p>
-                </div>
-            </div>
-        )
+        return <RequirementNotice title={t('encounters.noCampaign')} hint={t('encounters.noCampaignHint')} link="/campaigns" linkLabel={t('nav.campaigns')} />
     }
 
     const patch = (updates: Partial<Encounter>) => {

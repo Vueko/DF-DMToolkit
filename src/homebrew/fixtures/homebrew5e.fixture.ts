@@ -55,3 +55,60 @@ export const smallTreant = {
     ],
     environment: ['coastal', 'forest', 'grassland', 'hill', 'mountain', 'swamp', 'underwater'],
 }
+
+// adultBronzeDragonXmm: recorte del Adult Bronze Dragon (XMM, formato 2024) del
+// "Export List" de 5etools; ejercita spellcasting, initiative, soundClip y tags 2024.
+export const adultBronzeDragonXmm = {
+    name: 'Adult Bronze Dragon',
+    source: 'XMM',
+    size: ['H'],
+    type: { type: 'dragon', tags: ['metallic'] },
+    alignment: ['L', 'G'],
+    ac: [18],
+    hp: { average: 212, formula: '17d12 + 102' },
+    speed: { walk: 40, fly: 80, swim: 40 },
+    initiative: { proficiency: 2 },
+    str: 25, dex: 10, con: 23, int: 16, wis: 15, cha: 20,
+    save: { dex: '+5', wis: '+7' },
+    skill: { insight: '+7', perception: '+12', stealth: '+5' },
+    senses: ['Blindsight 60 ft.', 'Darkvision 120 ft.'],
+    passive: 22,
+    immune: ['lightning'],
+    languages: ['Common', 'Draconic'],
+    cr: { cr: '15', xpLair: 15000 },
+    spellcasting: [
+        {
+            name: 'Spellcasting',
+            type: 'spellcasting',
+            headerEntries: [
+                'The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save {@dc 17}, {@hit 10} to hit with spell attacks):',
+            ],
+            will: [
+                '{@spell Detect Magic|XPHB}',
+                '{@spell Guiding Bolt|XPHB} (level 2 version)',
+                '{@spell Speak with Animals|XPHB}',
+                '{@spell Thaumaturgy|XPHB}',
+            ],
+            daily: {
+                '1e': ['{@spell Detect Thoughts|XPHB}', '{@spell Water Breathing|XPHB}'],
+            },
+            ability: 'cha',
+            displayAs: 'action',
+        },
+    ],
+    trait: [
+        { name: 'Amphibious', entries: ['The dragon can breathe air and water.'] },
+        { name: 'Legendary Resistance (3/Day, or 4/Day in Lair)', entries: ['If the dragon fails a saving throw, it can choose to succeed instead.'] },
+    ],
+    action: [
+        { name: 'Multiattack', entries: ['The dragon makes three Rend attacks. It can replace one attack with a use of (A) Repulsion Breath or (B) Spellcasting to cast {@spell Guiding Bolt|XPHB} (level 2 version).'] },
+        { name: 'Rend', entries: ['{@atkr m} {@hit 12}, reach 10 ft. {@h}16 ({@damage 2d8 + 7}) Slashing damage plus 5 ({@damage 1d10}) Lightning damage.'] },
+        { name: 'Lightning Breath {@recharge 5}', entries: ['{@actSave dex} {@dc 19}, each creature in a 90-foot-long, 5-foot-wide {@variantrule Line [Area of Effect]|XPHB|Line}. {@actSaveFail} 55 ({@damage 10d10}) Lightning damage. {@actSaveSuccess} Half damage.'] },
+    ],
+    legendary: [
+        { name: 'Pounce', entries: ['The dragon moves up to half its {@variantrule Speed|XPHB}, and it makes one Rend attack.'] },
+    ],
+    soundClip: { type: 'internal', path: 'bestiary/bronze-dragon.opus' },
+    environment: ['coastal'],
+    dragonAge: 'adult',
+}

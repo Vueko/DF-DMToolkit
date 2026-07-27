@@ -5,6 +5,7 @@ import { createMigrate } from '../persistMigration'
 import type { CampaignState } from './types'
 import { createCampaignsSlice } from './slices/campaigns'
 import { createSessionsSlice } from './slices/sessions'
+import { createSessionItemsSlice } from './slices/sessionItems'
 import { createScenesSlice } from './slices/scenes'
 import { createPlaylistsSlice } from './slices/playlists'
 import { createMapSlice } from './slices/map'
@@ -51,6 +52,7 @@ export const useCampaignStore = create<CampaignState>()(
             currentSessionId: null,
             ...createCampaignsSlice(set, get),
             ...createSessionsSlice(set, get),
+            ...createSessionItemsSlice(set, get),
             ...createScenesSlice(set, get),
             ...createPlaylistsSlice(set, get),
             ...createMapSlice(set, get),

@@ -34,6 +34,8 @@ contextBridge.exposeInMainWorld('electron', {
             ipcRenderer.invoke('fs:get-audio', id),
         deleteAudio: (id: string): Promise<void> =>
             ipcRenderer.invoke('fs:delete-audio', id),
+        getBuiltinAudio: (file: string): Promise<Uint8Array | null> =>
+            ipcRenderer.invoke('fs:get-builtin-audio', file),
         saveMapImage: (id: string, data: ArrayBuffer): Promise<void> =>
             ipcRenderer.invoke('fs:save-map-image', id, new Uint8Array(data)),
         getMapImage: (id: string): Promise<Uint8Array | null> =>

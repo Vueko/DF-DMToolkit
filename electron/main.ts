@@ -5,6 +5,7 @@ import * as fs from 'fs'
 import { autoUpdater } from 'electron-updater'
 import { registerSrdIpc } from './srd'
 import { isAllowedStoreKey, isAllowedVaultImageExtension, VAULT_IMAGE_EXT } from './mainSecurity'
+import { resolveBuiltinPath } from './builtinAudio'
 
 // Allows UUIDs and simple slug IDs (e.g. "shared-map"), blocks path traversal
 const SAFE_ID_RE = /^[a-zA-Z0-9_-]{1,80}$/
@@ -378,6 +379,15 @@ app.whenReady().then(() => {
     if (!SAFE_ID_RE.test(id)) return
     const p = join(audioDir, id)
     if (fs.existsSync(p)) fs.unlinkSync(p)
+  })
+
+  const builtinSoundsDir = app.isPackaged
+    ? join(process.resourcesPath, 'sounds')
+    : join(app.getAppPath(), 'resources', 'sounds')
+
+  ipcMain.handle('fs:get-builtin-audio', (_, file: string): Uint8Array | null => {
+    const p = resolveBuiltinPath(builtinSoundsDir, file)
+    return p && fs.existsSync(p) ? fs.readFileSync(p) : null
   })
 
   ipcMain.handle('fs:save-map-image', (_, id: string, data: Uint8Array) => {

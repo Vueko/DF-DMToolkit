@@ -1,6 +1,7 @@
 export * from './scene'
 export * from './music'
 export * from './session'
+export * from './sessionItem'
 export * from './map'
 export * from './encounter'
 export * from './playerScreen'

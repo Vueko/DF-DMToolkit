@@ -4,6 +4,10 @@ import { electronStorage } from '../utils/electronStorage'
 import { createMigrate } from './persistMigration'
 import { sortCombatants, d20, applyDamage } from '../utils/combat'
 import { abilityMod } from '../utils/monster'
+import { useDiceStore } from './diceStore'
+import { d20RollResult } from '../dice/roll'
+import { translate } from '../i18n'
+import { useSettingsStore } from './settingsStore'
 import type { EncounterCombat, Combatant, EnemyInstance } from '../types'
 
 interface CombatStoreState {
@@ -91,16 +95,25 @@ export const useCombatStore = create<CombatStoreState>()(
                 })),
 
                 // Una tirada por tipo de monstruo (monsterId); cada instancia hereda la del grupo.
+                // Cada tirada de grupo se loguea en el historial de dados.
                 rollEnemyInitiative: (encounterId, rng = Math.random) => mutate(encounterId, (c) => {
                     const byMonster = new Map<string, number>()
                     const instanceById = new Map(c.enemyInstances.map((i) => [i.instanceId, i]))
+                    const initiativeLabel = translate(useSettingsStore.getState().language, 'dice.initiative')
                     return {
                         ...c,
                         combatants: c.combatants.map((x) => {
                             if (x.kind !== 'enemy') return x
-                            const monsterId = instanceById.get(x.refId)?.monsterId ?? x.refId
-                            if (!byMonster.has(monsterId)) byMonster.set(monsterId, d20(rng))
-                            return { ...x, initiative: byMonster.get(monsterId)! + abilityMod(x.dexScore ?? 10) }
+                            const instance = instanceById.get(x.refId)
+                            const monsterId = instance?.monsterId ?? x.refId
+                            const bonus = x.initiativeBonus ?? abilityMod(x.dexScore ?? 10)
+                            if (!byMonster.has(monsterId)) {
+                                const natural = d20(rng)
+                                byMonster.set(monsterId, natural)
+                                const groupName = (instance?.label ?? x.refId).replace(/ \d+$/, '')
+                                useDiceStore.getState().logRoll(d20RollResult(natural, bonus, `${initiativeLabel} · ${groupName}`))
+                            }
+                            return { ...x, initiative: byMonster.get(monsterId)! + bonus }
                         }),
                     }
                 }),

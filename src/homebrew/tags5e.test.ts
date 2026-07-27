@@ -27,3 +27,26 @@ describe('strip5eTags', () => {
         expect(strip5eTags('texto normal')).toBe('texto normal')
     })
 })
+
+describe('strip5eTags — tags 2024', () => {
+    it('atkr', () => {
+        expect(strip5eTags('{@atkr m} {@hit 12}, reach 10 ft.')).toBe('Melee Attack Roll: +12, reach 10 ft.')
+        expect(strip5eTags('{@atkr r}')).toBe('Ranged Attack Roll:')
+        expect(strip5eTags('{@atkr m,r}')).toBe('Melee or Ranged Attack Roll:')
+    })
+    it('actSave y resultados', () => {
+        expect(strip5eTags('{@actSave dex} {@dc 19}, each creature. {@actSaveFail} 55 damage. {@actSaveSuccess} Half damage.'))
+            .toBe('Dexterity Saving Throw: DC 19, each creature. Failure: 55 damage. Success: Half damage.')
+        expect(strip5eTags('{@actSaveSuccessOrFail}')).toBe('Failure or Success:')
+    })
+    it('actTrigger / actResponse', () => {
+        expect(strip5eTags('{@actTrigger} An enemy moves. {@actResponse} It attacks.'))
+            .toBe('Trigger: An enemy moves. Response: It attacks.')
+        expect(strip5eTags('{@actResponse d}')).toBe('Response — Damage:')
+    })
+    it('display override con 3 segmentos', () => {
+        expect(strip5eTags('a 5-foot-wide {@variantrule Line [Area of Effect]|XPHB|Line}.')).toBe('a 5-foot-wide Line.')
+        expect(strip5eTags('{@spell Guiding Bolt|XPHB} (level 2 version)')).toBe('Guiding Bolt (level 2 version)')
+        expect(strip5eTags('{@condition Prone|XPHB}')).toBe('Prone')
+    })
+})

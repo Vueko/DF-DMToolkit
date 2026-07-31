@@ -32,9 +32,7 @@ International License, available at
 https://creativecommons.org/licenses/by/4.0/legalcode.
 
 SRD data is served by Open5e and cached locally by the app. Application source
-code is licensed separately under the MIT License in `LICENSE`. This README is
-not legal advice; review the applicable licenses and policies before publishing
-or distributing builds.
+code is licensed separately under the MIT License in `LICENSE`.
 
 ## Development
 
